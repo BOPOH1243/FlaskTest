@@ -8,10 +8,11 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask.cli import with_appcontext
 import click
-import datetime
+from datetime import datetime, timedelta
 from celery import Celery
 import requests
 from flasgger import Swagger
+from flask_admin.base import BaseView, expose
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -40,7 +41,7 @@ class Transaction(db.Model):
     amount = db.Column(db.Float, nullable=False)
     commission = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default='pending')  # pending, confirmed, canceled, expired
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 # Forms
@@ -56,10 +57,25 @@ class TransactionForm(FlaskForm):
     status = SelectField('Status', choices=[('pending', 'Pending'), ('confirmed', 'Confirmed'), ('canceled', 'Canceled'), ('expired', 'Expired')], validators=[DataRequired()])
     submit = SubmitField('Submit')
 
+class DashboardView(BaseView):
+    @expose('/')
+    def index(self):
+        users_count = User.query.count()
+        transactions_count = Transaction.query.count()
+        total_amount = db.session.query(db.func.sum(Transaction.amount)).filter(Transaction.created_at >= datetime.utcnow().date()).scalar() or 0
+        recent_transactions = Transaction.query.order_by(Transaction.created_at.desc()).limit(10).all()
+        return self.render('admin/dashboard.html',
+                           users_count=users_count,
+                           transactions_count=transactions_count,
+                           total_amount=total_amount,
+                           recent_transactions=recent_transactions)
+
+
 # Admin
 admin = Admin(app, template_mode='bootstrap3')
 admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(Transaction, db.session))
+admin.add_view(DashboardView(name='Dashboard', endpoint='dashboard'))
 
 # CLI Command
 @click.command('create-admin')

@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: baa786409f36
+Revision ID: 8f09bca6620e
 Revises: 
-Create Date: 2024-12-13 05:07:15.812458
+Create Date: 2024-12-13 07:29:36.912313
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'baa786409f36'
+revision = '8f09bca6620e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,9 +22,9 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('balance', sa.Float(), nullable=True),
     sa.Column('commission_rate', sa.Float(), nullable=True),
-    sa.Column('webhook_url', sa.String(length=200), nullable=True),
+    sa.Column('webhook_url', sa.String(length=255), nullable=True),
     sa.Column('role', sa.String(length=50), nullable=True),
-    sa.Column('usdt_wallet', sa.String(length=100), nullable=True),
+    sa.Column('usdt_wallet', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('transaction',
@@ -32,8 +32,8 @@ def upgrade():
     sa.Column('amount', sa.Float(), nullable=False),
     sa.Column('commission', sa.Float(), nullable=False),
     sa.Column('status', sa.String(length=50), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
